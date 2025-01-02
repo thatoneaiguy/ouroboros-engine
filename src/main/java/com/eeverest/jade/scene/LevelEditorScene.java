@@ -3,6 +3,7 @@ package com.eeverest.jade.scene;
 import com.eeverest.jade.Camera;
 import com.eeverest.jade.Scene;
 import com.eeverest.renderer.Shader;
+import com.eeverest.renderer.Texture;
 import com.eeverest.util.Time;
 import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
@@ -15,46 +16,32 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class LevelEditorScene extends Scene {
-    private String vertexShaderSource = "#version 330 core\n" +
-            "layout (location=0) in vec3 aPos;\n" +
-            "layout (location=1) in vec4 aColour;\n" +
-            "\n" +
-            "out vec4 fColour;\n" +
-            "\n" +
-            "void main() {\n" +
-            "    fColour = aColour;\n" +
-            "    gl_Position = vec4(aPos, 1.0);\n" +
-            "}";
-    private String fragmentShaderSource = "#version 330 core\n" +
-            "in vec4 fColour;\n" +
-            "\n" +
-            "out vec4 colour;\n" +
-            "\n" +
-            "void main() {\n" +
-            "    colour = fColour;\n" +
-            "}";
-
     private int vertexID, fragmentID, shaderProgram;
-    private int vaoID, vboID, eboID;
-
-    // ! These arrays are literally the normalised device coordinates for vertices. Probably temporary, but god i wish i had satin API
 
     private float[] vertexArray = {
-            // pos, colour
-            500.5f, -500.5f,  0.0f,       1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
-            -500.5f, 500.0f,  0.0f,       0.0f, 1.0f, 0.0f, 1.0f, // Top left
-            500.5f,  500.5f,  0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // Top right
-            -500.5f,-500.5f,  0.0f,       1.0f, 1.0f, 0.0f, 1.0f // Bottom left
+            // position               // color                  // UV Coordinates
+            100f,   0f, 0.0f,       1.0f, 0.0f, 0.0f, 1.0f,     1, 1, // Bottom right 0
+            0f, 100f, 0.0f,       0.0f, 1.0f, 0.0f, 1.0f,     0, 0, // Top left     1
+            100f, 100f, 0.0f ,      1.0f, 0.0f, 1.0f, 1.0f,     1, 0, // Top right    2
+            0f,   0f, 0.0f,       1.0f, 1.0f, 0.0f, 1.0f,     0, 1  // Bottom left  3
     };
 
-    // ! MUST be in counter-clockwise order
+    // IMPORTANT: Must be in counter-clockwise order
     private int[] elementArray = {
-            2, 1, 0, // Top right tri-angle
-            0, 1, 3 // Bottom left triangle
+            /*
+                    x        x
+
+
+                    x        x
+             */
+            2, 1, 0, // Top right triangle
+            0, 1, 3 // bottom left triangle
     };
+
+    private int vaoID, vboID, eboID;
 
     private Shader defaultShader;
-
+    private Texture testTexture;
 
     public LevelEditorScene() {
 
@@ -62,54 +49,27 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void init() {
-        this.camera = new Camera(new Vector2f());
-
+        this.camera = new Camera(new Vector2f(-200, -300));
         defaultShader = new Shader("src/main/resources/assets/shaders/default.glsl");
         defaultShader.compile();
+        this.testTexture = new Texture("src/main/resources/assets/texture/testImage.png");
 
-        // ! Compile and link shaders
-        // ? VERTEX
-        vertexID = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexID, vertexShaderSource);
-        glCompileShader(vertexID);
-
-        // * check for compile errors
-        int success = glGetShaderi(vertexID, GL_COMPILE_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetShaderi(vertexID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tVertex shader failed to compile");
-            System.out.println(glGetShaderInfoLog(vertexID, len));
-            assert false: "";
-        }
-
-        // ? FRAGMENT
-        fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentID, fragmentShaderSource);
-        glCompileShader(fragmentID);
-
-        // * check for compile errors
-        success = glGetShaderi(fragmentID, GL_COMPILE_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetShaderi(fragmentID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tFragment shader failed to compile");
-            System.out.println(glGetShaderInfoLog(fragmentID, len));
-            assert false: "";
-        }
-
-        // ! Generate VBO, VAO and EBO buffers, then send to GPU
+        // ============================================================
+        // Generate VAO, VBO, and EBO buffer objects, and send to GPU
+        // ============================================================
         vaoID = glGenVertexArrays();
         glBindVertexArray(vaoID);
 
-        // * create a float buffer of vertices
+        // Create a float buffer of vertices
         FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(vertexArray.length);
         vertexBuffer.put(vertexArray).flip();
 
-        // * create the VBO & upload vertex buffer
+        // Create VBO upload the vertex buffer
         vboID = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
-        // * create index buffer
+        // Create the indices and upload
         IntBuffer elementBuffer = BufferUtils.createIntBuffer(elementArray.length);
         elementBuffer.put(elementArray).flip();
 
@@ -117,35 +77,51 @@ public class LevelEditorScene extends Scene {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementBuffer, GL_STATIC_DRAW);
 
-        // * add vertex attribute pointers
+        // Add the vertex attribute pointers
         int positionsSize = 3;
-        int colourSize = 4;
-        int floatSizeBytes = 4;
-        int vertexSizeBytes = (positionsSize + colourSize) * floatSizeBytes;
+        int colorSize = 4;
+        int uvSize = 2;
+        int vertexSizeBytes = (positionsSize + colorSize + uvSize) * Float.BYTES;
         glVertexAttribPointer(0, positionsSize, GL_FLOAT, false, vertexSizeBytes, 0);
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, colourSize, GL_FLOAT, false, vertexSizeBytes, positionsSize * floatSizeBytes);
+        glVertexAttribPointer(1, colorSize, GL_FLOAT, false, vertexSizeBytes, positionsSize * Float.BYTES);
         glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(2, uvSize, GL_FLOAT, false, vertexSizeBytes, (positionsSize + colorSize) * Float.BYTES);
+        glEnableVertexAttribArray(2);
     }
 
     @Override
     public void update(float dt) {
-        camera.position.x -= dt * 50.0f;
+//        camera.position.x -= dt * 50.0f;
+//        camera.position.y -= dt * 20.0f;
 
         defaultShader.use();
-        defaultShader.uploadMat4f("uProj", camera.getProjectionMatrix());
-        defaultShader.uploadMat4f("uView", camera.getViewMatrix());
-        defaultShader.uploadFloat("uTiime", Time.getTime());
 
+        // Upload texture to shader
+        defaultShader.uploadTexture("TEX_SAMPLER", 0);
+        glActiveTexture(GL_TEXTURE0);
+        testTexture.bind();
+
+        defaultShader.uploadMat4f("uProjection", camera.getProjectionMatrix());
+        defaultShader.uploadMat4f("uView", camera.getViewMatrix());
+        defaultShader.uploadFloat("uTime", Time.getTime());
+        // Bind the VAO that we're using
         glBindVertexArray(vaoID);
+
+        // Enable the vertex attribute pointers
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
         glDrawElements(GL_TRIANGLES, elementArray.length, GL_UNSIGNED_INT, 0);
 
-        // * unbind them !!
+        // Unbind everything
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+
         glBindVertexArray(0);
+
         defaultShader.detach();
     }
 }

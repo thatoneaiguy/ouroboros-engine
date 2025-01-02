@@ -5,15 +5,14 @@ import com.eeverest.jade.Window;
 
 public class LevelScene extends Scene {
     public LevelScene() {
-        System.out.println("Level loaded successfully");
+        System.out.println("Inside level scene");
+        Window.get().r = 1;
+        Window.get().g = 1;
+        Window.get().b = 1;
     }
-
-    // ! LEVEL IS DEFAULT BLACK
 
     @Override
     public void update(float dt) {
-        Window.get().r = 0;
-        Window.get().b = 0;
-        Window.get().g = 0;
+
     }
 }
