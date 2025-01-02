@@ -1,6 +1,7 @@
 package com.eeverest.jade.scene;
 
 import com.eeverest.jade.Scene;
+import com.eeverest.renderer.Shader;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
@@ -49,6 +50,8 @@ public class LevelEditorScene extends Scene {
             0, 1, 3 // Bottom left triangle
     };
 
+    private Shader defaultShader;
+
 
     public LevelEditorScene() {
 
@@ -56,6 +59,9 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void init() {
+        defaultShader = new Shader("src/main/resources/assets/shaders/default.glsl");
+        defaultShader.compile();
+
         // ! Compile and link shaders
         // ? VERTEX
         vertexID = glCreateShader(GL_VERTEX_SHADER);
@@ -85,19 +91,7 @@ public class LevelEditorScene extends Scene {
             assert false: "";
         }
 
-        // * Link shaders and check for errors
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexID);
-        glAttachShader(shaderProgram, fragmentID);
-        glLinkProgram(shaderProgram);
 
-        success = glGetProgrami(shaderProgram, GL_LINK_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetProgrami(shaderProgram, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tLinking shaders failed");
-            System.out.println(glGetProgramInfoLog(shaderProgram, len));
-            assert false: "";
-        }
 
         // ! Generate VBO, VAO and EBO buffers, then send to GPU
         vaoID = glGenVertexArrays();
@@ -134,10 +128,7 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void update(float dt) {
-        System.out.println("" + (1.0f / dt) + "FPS");
-
-        // * Bind shader and VAO, then enable and draw them
-        glUseProgram(shaderProgram);
+        defaultShader.use();
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -146,6 +137,6 @@ public class LevelEditorScene extends Scene {
 
         // * unbind them !!
         glBindVertexArray(0);
-        glUseProgram(0);
+        defaultShader.detach();
     }
 }

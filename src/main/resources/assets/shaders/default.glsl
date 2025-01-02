@@ -19,5 +19,3 @@ out vec4 colour;
 void main() {
     colour = fColour;
 }
-
-
