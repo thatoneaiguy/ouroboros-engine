@@ -3,9 +3,9 @@ package com.eeverest.jade.scene;
 import com.eeverest.jade.Camera;
 import com.eeverest.jade.Scene;
 import com.eeverest.renderer.Shader;
+import com.eeverest.util.Time;
 import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.system.CallbackI;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -41,10 +41,10 @@ public class LevelEditorScene extends Scene {
 
     private float[] vertexArray = {
             // pos, colour
-            50.5f, -50.5f,  0.0f,       1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
-            -50.5f, 50.5f,  0.0f,       0.0f, 1.0f, 0.0f, 1.0f, // Top left
-            50.5f,  50.5f,  0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // Top right
-            -50.5f,-50.5f,  0.0f,       1.0f, 1.0f, 0.0f, 1.0f // Bottom left
+            500.5f, -500.5f,  0.0f,       1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
+            -500.5f, 500.0f,  0.0f,       0.0f, 1.0f, 0.0f, 1.0f, // Top left
+            500.5f,  500.5f,  0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // Top right
+            -500.5f,-500.5f,  0.0f,       1.0f, 1.0f, 0.0f, 1.0f // Bottom left
     };
 
     // ! MUST be in counter-clockwise order
@@ -96,8 +96,6 @@ public class LevelEditorScene extends Scene {
             assert false: "";
         }
 
-
-
         // ! Generate VBO, VAO and EBO buffers, then send to GPU
         vaoID = glGenVertexArrays();
         glBindVertexArray(vaoID);
@@ -138,6 +136,8 @@ public class LevelEditorScene extends Scene {
         defaultShader.use();
         defaultShader.uploadMat4f("uProj", camera.getProjectionMatrix());
         defaultShader.uploadMat4f("uView", camera.getViewMatrix());
+        defaultShader.uploadFloat("uTiime", Time.getTime());
+
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
