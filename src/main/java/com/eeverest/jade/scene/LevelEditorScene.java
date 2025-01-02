@@ -33,7 +33,7 @@ public class LevelEditorScene extends Scene {
     private int vertexID, fragmentID, shaderProgram;
     private int vaoID, vboID, eboID;
 
-    // ! These arrays are literally the coordinates for vertices. Probably temporary, but god i wish i had satin API
+    // ! These arrays are literally the normalised device coordinates for vertices. Probably temporary, but god i wish i had satin API
 
     private float[] vertexArray = {
             // pos, colour
@@ -134,6 +134,8 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void update(float dt) {
+        System.out.println("" + (1.0f / dt) + "FPS");
+
         // * Bind shader and VAO, then enable and draw them
         glUseProgram(shaderProgram);
         glBindVertexArray(vaoID);
