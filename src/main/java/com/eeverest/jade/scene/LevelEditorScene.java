@@ -1,8 +1,11 @@
 package com.eeverest.jade.scene;
 
+import com.eeverest.jade.Camera;
 import com.eeverest.jade.Scene;
 import com.eeverest.renderer.Shader;
+import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.system.CallbackI;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -38,10 +41,10 @@ public class LevelEditorScene extends Scene {
 
     private float[] vertexArray = {
             // pos, colour
-            0.5f, -0.5f,  0.0f,       1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
-            -0.5f, 0.5f,  0.0f,       0.0f, 1.0f, 0.0f, 1.0f, // Top left
-            0.5f,  0.5f,  0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // Top right
-            -0.5f,-0.5f,  0.0f,       1.0f, 1.0f, 0.0f, 1.0f // Bottom left
+            50.5f, -50.5f,  0.0f,       1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
+            -50.5f, 50.5f,  0.0f,       0.0f, 1.0f, 0.0f, 1.0f, // Top left
+            50.5f,  50.5f,  0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // Top right
+            -50.5f,-50.5f,  0.0f,       1.0f, 1.0f, 0.0f, 1.0f // Bottom left
     };
 
     // ! MUST be in counter-clockwise order
@@ -59,6 +62,8 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void init() {
+        this.camera = new Camera(new Vector2f());
+
         defaultShader = new Shader("src/main/resources/assets/shaders/default.glsl");
         defaultShader.compile();
 
@@ -128,7 +133,11 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void update(float dt) {
+        camera.position.x -= dt * 50.0f;
+
         defaultShader.use();
+        defaultShader.uploadMat4f("uProj", camera.getProjectionMatrix());
+        defaultShader.uploadMat4f("uView", camera.getViewMatrix());
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);

@@ -1,6 +1,8 @@
 package com.eeverest.jade;
 
 public abstract class Scene {
+    protected Camera camera;
+
     public Scene() {}
 
     public void init() {}
